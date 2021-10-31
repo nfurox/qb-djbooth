@@ -3,6 +3,16 @@
 local QBCore = exports['qb-core']:GetCoreObject()
 local currentZone = nil
 local PlayerData = {}
+local isLoggedin = false -- ADD THIS to the top of your client lua
+
+AddEventHandler('onResourceStart', function(resource) --ADD above on playerloaded
+   if resource == GetCurrentResourceName() then
+      Wait(100)
+      PlayerData = QBCore.Functions.GetPlayerData()
+      isLoggedin = true
+
+   end
+end)
 
 -- Handlers
 
@@ -50,8 +60,7 @@ local musicMenu = {
         header = '⏸️ | Pause Music',
         txt = 'Pause currently playing music',
         params = {
-            isServer = true,
-            event = 'qb-djbooth:server:pauseMusic',
+            event = 'qb-djbooth:client:pauseMusic',
             args = {
                 currentZone = currentZone
             }
@@ -61,8 +70,7 @@ local musicMenu = {
         header = '▶️ | Resume Music',
         txt = 'Resume playing paused music',
         params = {
-            isServer = true,
-            event = 'qb-djbooth:server:resumeMusic',
+            event = 'qb-djbooth:client:resumeMusic',
             args = {
                 currentZone = currentZone
             }
@@ -83,8 +91,7 @@ local musicMenu = {
         txt = 'Stop the music & choose a new song',
         isServer = true,
         params = {
-            isServer = true,
-            event = 'qb-djbooth:server:stopMusic',
+            event = 'qb-djbooth:client:stopMusic',
             args = {
                 currentZone = currentZone
             }
@@ -100,34 +107,64 @@ local vanilla = BoxZone:Create(Config.Locations['vanilla'].coords, 1, 1, {
 })
 
 vanilla:onPlayerInOut(function(isPointInside)
-    if isPointInside and PlayerData.job.name == Config.Locations['vanilla'].job then
-        currentZone = 'vanilla'
-        exports['qb-menu']:showHeader(musicHeader)
-    else
-        currentZone = nil
-        exports['qb-menu']:closeMenu()
-    end
+    Wait(200) -- ADD THIS
+    if isLoggedin then  -- ADD THIS
+        if isPointInside and Config.Locations['vanilla'].job == "all" or PlayerData.job.name == Config.Locations['vanilla'].job then -- ADD THIS
+            currentZone = 'vanilla'
+            exports['qb-menu']:showHeader(musicHeader)
+        else
+            currentZone = nil
+            exports['qb-menu']:closeMenu()
+        end
+    end-- ADD THIS
 end)
 
-local other = BoxZone:Create(Config.Locations['other'].coords, 1, 1, {
-    name="other",
+--[[vanilla:onPlayerInOut(function(isPointInside)
+    Wait(200)
+    if isLoggedin then 
+        if isPointInside and Config.Locations['vanilla'].job == "all" or PlayerData.job.name == Config.Locations['vanilla'].job then
+            currentZone = 'vanilla'
+            exports['qb-menu']:showHeader(musicHeader)
+        else
+            currentZone = nil
+            exports['qb-menu']:closeMenu()
+        end
+    end
+end)]]--
+
+local thelost = BoxZone:Create(Config.Locations['thelost'].coords, 1, 1, {
+    name="thelost",
     heading=0
 })
 
-other:onPlayerInOut(function(isPointInside)
-    if isPointInside and PlayerData.job.name == Config.Locations['other'].job then
-        currentZone = 'other'
-        exports['qb-menu']:showHeader(musicHeader)
-    else
-        currentZone = nil
-        exports['qb-menu']:closeMenu()
-    end
+thelost:onPlayerInOut(function(isPointInside)
+    Wait(200) -- ADD THIS
+    if isLoggedin then  -- ADD THIS
+        if isPointInside and Config.Locations['thelost'].job == "all" or PlayerData.job.name == Config.Locations['thelost'].job then -- ADD THIS
+            currentZone = 'thelost'
+            exports['qb-menu']:showHeader(musicHeader)
+        else
+            currentZone = nil
+            exports['qb-menu']:closeMenu()
+        end
+    end-- ADD THIS
 end)
 
 -- Events
 
 RegisterNetEvent('qb-djbooth:client:playMusic', function()
     exports['qb-menu']:openMenu(musicMenu)
+end)
+
+RegisterNetEvent("qb-djbooth:client:resumeMusic", function()
+    TriggerServerEvent("qb-djbooth:server:resumeMusic",currentZone)
+end)
+
+RegisterNetEvent("qb-djbooth:client:pauseMusic", function()
+    TriggerServerEvent("qb-djbooth:server:pauseMusic",currentZone)
+end)
+RegisterNetEvent("qb-djbooth:client:stopMusic", function()
+    TriggerServerEvent("qb-djbooth:server:stopMusic",currentZone)
 end)
 
 RegisterNetEvent('qb-djbooth:client:musicMenu', function()
@@ -155,10 +192,10 @@ RegisterNetEvent('qb-djbooth:client:changeVolume', function()
         submitText = "Submit",
         inputs = {
             {
-                type = 'text', -- number doesn't accept decimals??
+                type = 'number', -- 
                 isRequired = true,
                 name = 'volume',
-                text = 'Min: 0.01 - Max: 1'
+                text = 'Min: 1[Off] - Max: 100[Max]'
             }
         }
     })
